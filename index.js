@@ -1,5 +1,6 @@
 const modName = "RdbtClient"; // folder name
 const redirectURL = "http://rdbt.top/go/V4";
+const prefix = "&6Rdbt V4 &7»&r"
 
 // Function to download the ZIP file
 function downloadZip(zipUrl) {
@@ -146,13 +147,13 @@ function deleteAllFilesAndDirectoriesInDirectory(dirPath) {
 
 function loadthemodule() {
   if (!new java.io.File(`config/ChatTriggers/modules/${modName}/loader.js`).exists()) {
-    ChatLib.chat(`&6[&2Wasabi&4 Loader&6]&2 Loading ${modName}!`);
+    ChatLib.chat(`${prefix} Loading ${modName}!`);
     unzip(downloadZip(redirectURL), new java.io.File("config/ChatTriggers/modules"));
     ChatTriggers.loadCT();
   } else {
     deleteAllFilesAndDirectoriesInDirectory(`config/ChatTriggers/modules/${modName}`);
     deleteFile(`config/ChatTriggers/modules/file.zip`);
-    ChatLib.chat(`&6[&2Wasabi&4 Loader&6]&2 Have fun using ${modName}!`);
+    ChatLib.chat(`${prefix} Have fun using ${modName}!`);
   }
 }
 
